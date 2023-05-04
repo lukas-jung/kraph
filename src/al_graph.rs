@@ -44,6 +44,18 @@ impl<N, E> Graph<N, E> for ALGraph<N, E> {
             .unwrap_or_default()
     }
 
+    fn get_all_edges(&self) -> Box<dyn Iterator<Item = (u32, u32, &E)> + '_> {
+        Box::new(self.adj_lists.iter().flat_map(|(from_ix, edges)| {
+            edges.iter().filter_map(move |(to_ix, edge)| {
+                if from_ix <= to_ix {
+                    Some((*from_ix, *to_ix, &**edge))
+                } else {
+                    None
+                }
+            })
+        }))
+    }
+
     fn get_node(&self, node_ix: u32) -> Option<&N> {
         self.nodes.get(node_ix as usize)
     }
