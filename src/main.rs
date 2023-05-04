@@ -30,7 +30,11 @@ fn main() {
         let weight: NotNan<f64> = inner_iter.next().unwrap().parse().unwrap();
         graph.add_edge(from, to, weight);
     }
-    let result = kraph::algo::kruskal(graph);
+    println!("Graph loaded");
 
-    println!("{}", result);
+    let kruskal_result = kraph::algo::kruskal(&graph);
+    println!("Kruskal: {}", kruskal_result);
+
+    let prim_result = kraph::algo::prim(&graph);
+    println!("Prim: {}", prim_result);
 }
