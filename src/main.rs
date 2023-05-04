@@ -12,7 +12,7 @@ fn main() {
         let to: u32 = to.parse().unwrap();
         graph.add_edge(from, to, ());
     }
-    let count = kraph::algos::count_components(graph);
+    let count = kraph::algo::count_components(graph);
 
     println!("{}", count);
 }

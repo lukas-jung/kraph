@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 pub mod al_graph;
-pub mod algos;
+pub mod algo;
 
 pub trait Graph<N, E> {
     fn add_edge(&mut self, from: u32, to: u32, weight: E);
