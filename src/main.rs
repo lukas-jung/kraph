@@ -1,4 +1,4 @@
-use kraph::{al_graph::ALGraph, Graph};
+use kraph::{al_graph::ALGraph, Graph, NodeIx};
 use ordered_float::NotNan;
 fn main() {
     // let txt = std::fs::read_to_string("data/Graph_ganzganzgross.txt").unwrap();
@@ -9,8 +9,8 @@ fn main() {
 
     // for line in line_iter {
     //     let (from, to) = line.split_once('\t').unwrap();
-    //     let from: u32 = from.parse().unwrap();
-    //     let to: u32 = to.parse().unwrap();
+    //     let from = NodeIx(from.parse().unwrap());
+    //     let to = NodeIx(to.parse().unwrap());
     //     graph.add_edge(from, to, ());
     // }
     // let count = kraph::algo::count_components(graph);
@@ -25,8 +25,8 @@ fn main() {
 
     for line in line_iter {
         let mut inner_iter = line.split('\t');
-        let from: u32 = inner_iter.next().unwrap().parse().unwrap();
-        let to: u32 = inner_iter.next().unwrap().parse().unwrap();
+        let from = NodeIx(inner_iter.next().unwrap().parse().unwrap());
+        let to = NodeIx(inner_iter.next().unwrap().parse().unwrap());
         let weight: NotNan<f64> = inner_iter.next().unwrap().parse().unwrap();
         graph.add_edge(from, to, weight);
     }
