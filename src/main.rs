@@ -36,6 +36,6 @@ fn main() {
     let kruskal_result = kraph::algo::mst::kruskal(&graph);
     println!("Kruskal: {}", kruskal_result);
 
-    let prim_result = kraph::algo::mst::prim(&graph);
-    println!("Prim: {}", prim_result);
+    let prim_mst = kraph::algo::mst::prim(&graph, NodeIx(0));
+    println!("Prim: {}", prim_mst.get_weight());
 }

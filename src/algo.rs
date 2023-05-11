@@ -27,11 +27,11 @@ pub fn count_components<N, E>(graph: impl Graph<N, E>) -> u32 {
     count
 }
 
-pub fn nearest_neighbor<N>(graph: &impl Graph<N, NotNan<f64>>, start_node: NodeIx) -> NotNan<f64> {
+pub fn nearest_neighbor<N>(graph: &impl Graph<N, NotNan<f64>>, start_ix: NodeIx) -> NotNan<f64> {
     let mut visited = vec![false; graph.size().0 as usize];
-    visited[start_node] = true;
+    visited[start_ix] = true;
 
-    let mut current_node = start_node;
+    let mut current_node = start_ix;
     let mut result = NotNan::new(0f64).unwrap();
 
     while let Some((next_node, weight)) = graph
@@ -45,7 +45,33 @@ pub fn nearest_neighbor<N>(graph: &impl Graph<N, NotNan<f64>>, start_node: NodeI
     }
 
     result += graph
-        .get_edge_weight(current_node, start_node)
+        .get_edge_weight(current_node, start_ix)
+        .expect("Didn't find an edge back to the start");
+
+    result
+}
+
+pub fn double_mst<N>(graph: &impl Graph<N, NotNan<f64>>, start_ix: NodeIx) -> NotNan<f64> {
+    let mst = mst::prim(graph, start_ix);
+
+    let mut visited = vec![false; graph.size().0 as usize];
+
+    let mut result = NotNan::default();
+    let mut last_node = start_ix;
+    for (from_ix, to_ix, weight) in mst.dfs() {
+        if !visited[from_ix] {
+            visited[from_ix] = true;
+            result += weight;
+        } else {
+            result += graph
+                .get_edge_weight(last_node, to_ix)
+                .expect("Didn't find shortcut!");
+        }
+        last_node = to_ix;
+    }
+
+    result += graph
+        .get_edge_weight(last_node, start_ix)
         .expect("Didn't find an edge back to the start");
 
     result

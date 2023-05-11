@@ -8,10 +8,65 @@ use ordered_float::NotNan;
 
 use crate::{Graph, NodeIx};
 
-pub struct MST<'a, E> {
+pub struct Mst<E> {
     start_ix: NodeIx,
-    adj_list: Vec<Vec<(NodeIx, &'a E)>>,
+    adj_list: Vec<Vec<(NodeIx, E)>>,
     weight: E,
+}
+
+pub struct MstDfsIter<'a, E> {
+    mst: &'a Mst<E>,
+    stack: Vec<(NodeIx, NodeIx, E)>,
+}
+
+impl<E> Iterator for MstDfsIter<'_, E>
+where
+    E: Copy,
+{
+    type Item = (NodeIx, NodeIx, E);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some((prev_ix, current_ix, weight)) = self.stack.pop() {
+            self.stack.extend(
+                self.mst.adj_list[current_ix]
+                    .iter()
+                    .map(|(to_ix, weight)| (current_ix, *to_ix, *weight)),
+            );
+            Some((prev_ix, current_ix, weight))
+        } else {
+            None
+        }
+    }
+}
+
+impl<E> Mst<E>
+where
+    E: Copy,
+{
+    pub fn get_start_ix(&self) -> NodeIx {
+        self.start_ix
+    }
+
+    pub fn get_weight(&self) -> &E {
+        &self.weight
+    }
+
+    pub fn get_edges(&self, node_ix: NodeIx) -> &[(NodeIx, E)] {
+        self.adj_list[node_ix].as_slice()
+    }
+
+    pub fn dfs(&self) -> MstDfsIter<'_, E>
+    where
+        E: Default,
+    {
+        MstDfsIter {
+            mst: self,
+            stack: self.adj_list[self.start_ix]
+                .iter()
+                .map(|(to_ix, weight)| (self.start_ix, *to_ix, *weight))
+                .collect(),
+        }
+    }
 }
 
 pub fn kruskal<N>(graph: &impl Graph<N, NotNan<f64>>) -> NotNan<f64> {
@@ -56,36 +111,43 @@ pub fn kruskal<N>(graph: &impl Graph<N, NotNan<f64>>) -> NotNan<f64> {
     result
 }
 
-pub fn prim<N>(graph: &impl Graph<N, NotNan<f64>>) -> NotNan<f64> {
+pub fn prim<N>(graph: &impl Graph<N, NotNan<f64>>, start_ix: NodeIx) -> Mst<NotNan<f64>> {
     #[derive(PartialEq, Eq, PartialOrd, Ord)]
-    struct WeightedEdgeTarget(NotNan<f64>, NodeIx);
+    struct WeightedEdgeTarget(NotNan<f64>, NodeIx, NodeIx);
 
     let mut in_mst = vec![false; graph.size().0 as usize];
     let mut fringe = BinaryHeap::new();
 
-    fn add_edge_to_mst<NN>(
+    fn add_node_to_mst<NN>(
         ix: NodeIx,
         graph: &impl Graph<NN, NotNan<f64>>,
         in_mst: &mut Vec<bool>,
         fringe: &mut BinaryHeap<Reverse<WeightedEdgeTarget>>,
     ) {
         in_mst[ix] = true;
-        for (weight, other_ix) in graph.get_edges(ix).map(|(o, w)| (*w, o)) {
-            if !in_mst[other_ix] {
-                fringe.push(Reverse(WeightedEdgeTarget(weight, other_ix)));
+        for (weight, to_ix) in graph.get_edges(ix).map(|(o, w)| (*w, o)) {
+            if !in_mst[to_ix] {
+                fringe.push(Reverse(WeightedEdgeTarget(weight, ix, to_ix)));
             }
         }
     }
 
-    add_edge_to_mst(NodeIx(0), graph, &mut in_mst, &mut fringe);
+    add_node_to_mst(start_ix, graph, &mut in_mst, &mut fringe);
 
-    let mut result = NotNan::new(0f64).unwrap();
-    while let Some(Reverse(WeightedEdgeTarget(weight, other_ix))) = fringe.pop() {
-        if !in_mst[other_ix] {
-            add_edge_to_mst(other_ix, graph, &mut in_mst, &mut fringe);
-            result += weight;
+    let mut mst: Mst<NotNan<f64>> = Mst {
+        start_ix: start_ix,
+        adj_list: vec![Vec::new(); graph.size().0 as usize],
+        weight: Default::default(), // Zero
+    };
+
+    while let Some(Reverse(WeightedEdgeTarget(weight, from_ix, to_ix))) = fringe.pop() {
+        if !in_mst[to_ix] {
+            add_node_to_mst(to_ix, graph, &mut in_mst, &mut fringe);
+
+            mst.adj_list[from_ix].push((to_ix, weight));
+            mst.weight += weight;
         }
     }
 
-    result
+    mst
 }
