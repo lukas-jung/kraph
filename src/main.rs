@@ -1,5 +1,6 @@
 use kraph::{al_graph::ALGraph, Graph, NodeIx};
 use ordered_float::NotNan;
+
 fn main() {
     // let txt = std::fs::read_to_string("data/Graph_ganzganzgross.txt").unwrap();
     // let mut line_iter = txt.lines();
@@ -32,9 +33,9 @@ fn main() {
     }
     println!("Graph loaded");
 
-    let kruskal_result = kraph::algo::kruskal(&graph);
+    let kruskal_result = kraph::algo::mst::kruskal(&graph);
     println!("Kruskal: {}", kruskal_result);
 
-    let prim_result = kraph::algo::prim(&graph);
+    let prim_result = kraph::algo::mst::prim(&graph);
     println!("Prim: {}", prim_result);
 }
