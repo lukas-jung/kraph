@@ -106,3 +106,27 @@ pub fn prim<N>(graph: &impl Graph<N, NotNan<f64>>) -> NotNan<f64> {
 
     result
 }
+
+pub fn nearest_neighbor<N>(graph: &impl Graph<N, NotNan<f64>>, start_node: NodeIx) -> NotNan<f64> {
+    let mut visited = vec![false; graph.size().0 as usize];
+    visited[start_node] = true;
+
+    let mut current_node = start_node;
+    let mut result = NotNan::new(0f64).unwrap();
+
+    while let Some((next_node, weight)) = graph
+        .get_edges(current_node)
+        .filter(|(node_ix, _)| !visited[*node_ix])
+        .min_by_key(|(_, weight)| **weight)
+    {
+        result += weight;
+        visited[next_node] = true;
+        current_node = next_node;
+    }
+
+    result += graph
+        .get_edge_weight(current_node, start_node)
+        .expect("Didn't find an edge back to the start");
+
+    result
+}

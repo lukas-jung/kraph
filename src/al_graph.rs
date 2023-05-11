@@ -54,6 +54,12 @@ impl<N, E> Graph<N, E> for ALGraph<N, E> {
                 .map(|(node_ix, edge_ix)| (*node_ix, &self.edges[*edge_ix]))
         }))
     }
+    fn get_edge_weight(&self, from_ix: NodeIx, to_ix: NodeIx) -> Option<&E> {
+        self.adj_lists
+            .get(&from_ix)
+            .and_then(|al| al.get(&to_ix))
+            .map(|&edge_ix| &self.edges[edge_ix])
+    }
 
     fn get_all_edges(&self) -> Box<dyn Iterator<Item = (NodeIx, NodeIx, &E)> + '_> {
         Box::new(self.adj_lists.iter().flat_map(move |(from_ix, edges)| {
