@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 pub mod al_graph;
 pub mod algo;
 
-#[derive(Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
 pub struct NodeIx(pub u32);
 
 impl From<NodeIx> for usize {

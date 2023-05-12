@@ -76,3 +76,86 @@ pub fn double_mst<N>(graph: &impl Graph<N, NotNan<f64>>, start_ix: NodeIx) -> No
 
     result
 }
+
+pub fn brute_force<N>(graph: &impl Graph<N, u64>, start_ix: NodeIx, bnb: bool) -> u64 {
+    // let mut ix_set: HashSet<NodeIx> = (0..graph.size().0).map(|i| NodeIx(i)).collect();
+    // ix_set.remove(&start_ix);
+    struct State {
+        visited: Vec<bool>,
+        continue_visit: Vec<NodeIx>,
+        route: Vec<NodeIx>,
+        weight: u64,
+    }
+
+    let mut state = State {
+        visited: vec![false; graph.size().0 as usize],
+        continue_visit: vec![NodeIx(0); graph.size().0 as usize],
+        route: vec![start_ix],
+        weight: 0,
+    };
+    state.visited[start_ix] = true;
+    state.continue_visit[0] = graph.size();
+
+    impl State {
+        fn find_next_step(&self) -> Option<NodeIx> {
+            if let Some(&continue_ix) = self.continue_visit.get(self.route.len()) {
+                for next_ix in continue_ix.into()..self.visited.len() {
+                    if !self.visited[next_ix] {
+                        return Some(NodeIx(next_ix as u32));
+                    }
+                }
+            }
+            None
+        }
+
+        fn take_step<NN>(&mut self, node_ix: NodeIx, graph: &impl Graph<NN, u64>) {
+            self.weight += graph
+                .get_edge_weight(*self.route.last().unwrap(), node_ix)
+                .unwrap();
+
+            self.continue_visit[self.route.len()] = NodeIx(node_ix.0 as u32 + 1);
+
+            self.visited[node_ix] = true;
+            self.route.push(node_ix);
+        }
+
+        fn step_back<NN>(&mut self, graph: &impl Graph<NN, u64>) {
+            if let Some(last_continue) = self.continue_visit.get_mut(self.route.len()) {
+                *last_continue = NodeIx(0);
+            }
+
+            let back_ix = self.route.pop().expect("Can't step back further!");
+            self.visited[back_ix] = false;
+
+            self.weight -= graph
+                .get_edge_weight(*self.route.last().unwrap(), back_ix)
+                .unwrap();
+        }
+    }
+
+    let mut min = u64::MAX;
+    loop {
+        if state.route.len() == usize::from(graph.size()) {
+            let full_round = state.weight
+                + graph
+                    .get_edge_weight(*state.route.last().unwrap(), start_ix)
+                    .unwrap();
+            if full_round < min {
+                min = full_round;
+            }
+            state.step_back(graph);
+        } else if let Some(next_ix) = state.find_next_step() {
+            state.take_step(next_ix, graph);
+            if bnb && state.weight > min {
+                state.step_back(graph);
+            }
+        } else {
+            if state.route.len() < 2 {
+                break;
+            }
+            state.step_back(graph);
+        }
+    }
+
+    min
+}
